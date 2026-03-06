@@ -1106,8 +1106,6 @@ def render_input() -> bool:
     with col_cc:
         st.caption(f"{char_count}/1000 {tr('char_count')}")
 
-    st.checkbox(tr("translate_toggle"), key="translate_input", value=False)
-
     col1, col2, col3, col4 = st.columns([2, 1, 1, 4])
     with col1:
         analyze = st.button(tr("analyze"), type="primary", use_container_width=True)
@@ -1333,11 +1331,17 @@ def main() -> None:
             else:
                 original = raw
                 translated = raw
-                if st.session_state.get("translate_input", False):
-                    with st.spinner(tr("translating")):
-                        translated, success = translate_to_english(raw)
-                        if success:
-                            st.info(f"{tr('translated_text')}: {translated}")
+                # Auto-detect non-English and translate silently
+                try:
+                    from googletrans import Translator
+                    _t = Translator()
+                    detected = _t.detect(raw)
+                    if detected and detected.lang and detected.lang != "en":
+                        with st.spinner(tr("translating")):
+                            result = _t.translate(raw, dest="en")
+                            translated = result.text
+                except Exception:
+                    pass  # Silently fall back to original text
                 with st.spinner(tr("analyzing")):
                     prob, risk, ftype = predict(bundle, translated)
                 st.session_state.analysis = {
