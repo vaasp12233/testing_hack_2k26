@@ -14,7 +14,7 @@ import streamlit as st
 # Constants
 # ----------------------------------------------------------------------
 APP_TITLE = "AI Fraud Shield Pro"
-APP_VERSION = "v7.1"
+APP_VERSION = "v7.2"  # Updated version
 MODELS_DIR = Path(__file__).resolve().parent / "models"
 APP_DIR = Path(__file__).resolve().parent
 
@@ -216,18 +216,23 @@ def get_tips(ftype: str) -> list[str]:
     return TIPS_I18N["en"].get(ftype, TIPS_I18N["en"]["Others"])
 
 # ----------------------------------------------------------------------
-# Translation function
+# Translation function using Google Cloud Translation API
 # ----------------------------------------------------------------------
 def translate_to_english(text: str) -> tuple[str, bool]:
     """
-    Translate text to English using Google Translate.
+    Translate text to English using Google Cloud Translation API.
+    Requires google-cloud-translate library and proper authentication.
     Returns (translated_text, success_flag).
     """
     try:
-        from googletrans import Translator
-        translator = Translator()
-        result = translator.translate(text, dest='en')
-        return result.text, True
+        from google.cloud import translate_v2 as translate
+        # Initialize client (uses GOOGLE_APPLICATION_CREDENTIALS environment variable)
+        client = translate.Client()
+        result = client.translate(text, target_language='en')
+        return result['translatedText'], True
+    except ImportError:
+        st.warning("Google Cloud Translation library not installed. Install with: pip install google-cloud-translate")
+        return text, False
     except Exception as e:
         st.warning(f"Translation failed: {e}. Using original text.")
         return text, False
@@ -465,7 +470,7 @@ def render_input() -> bool:
     st.caption(f"{char_count}/1000 characters")
 
     # Translation toggle
-    st.checkbox("🌐 Translate to English before analysis (using Google Translate)", key="translate_input", value=False)
+    st.checkbox("🌐 Translate to English before analysis (using Google Cloud Translation)", key="translate_input", value=False)
 
     # Action buttons (set flags)
     col1, col2, col3, col4 = st.columns([2, 1, 1, 5])
