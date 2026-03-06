@@ -11,82 +11,45 @@ from urllib.parse import quote
 import streamlit as st
 
 # ----------------------------------------------------------------------
-# Constants (full versions from original)
+# Constants
 # ----------------------------------------------------------------------
 APP_TITLE = "AI Fraud Shield Pro"
-APP_VERSION = "v6.1"
+APP_VERSION = "v7.1"
 MODELS_DIR = Path(__file__).resolve().parent / "models"
 APP_DIR = Path(__file__).resolve().parent
 
 FRAUD_CATEGORIES = ("UPI Fraud", "Job Scam", "Lottery Scam", "Phishing", "Others")
 
-LANGUAGES: dict[str, str] = {"English": "en", "हिंदी": "hi", "తెలుగు": "te"}
-
+# UI texts (only English)
 UI_TEXT: dict[str, dict[str, str]] = {
-    "title": {"en": "AI Fraud Shield Pro", "hi": "AI Fraud Shield Pro", "te": "AI Fraud Shield Pro"},
-    "hero_eyebrow": {"en": "Real-Time Threat Intelligence", "hi": "रीयल-टाइम खतरा विश्लेषण", "te": "తక్షణ ప్రమాద విశ్లేషణ"},
-    "hero_sub": {
-        "en": "SMS · Message · Fraud Risk Analysis Engine",
-        "hi": "SMS · संदेश · धोखाधड़ी जोखिम विश्लेषण",
-        "te": "SMS · సందేశం · మోసం ప్రమాద విశ్లేషణ",
-    },
-    "input_label": {"en": "Input Message", "hi": "संदेश लिखें", "te": "సందేశం నమోదు చేయండి"},
-    "analyze": {"en": "Analyze", "hi": "विश्लेषण", "te": "విశ్లేషించండి"},
-    "clear": {"en": "Clear", "hi": "रीसेट", "te": "క్లియర్"},
-    "redact": {"en": "Redact", "hi": "छुपाएँ", "te": "మాస్క్"},
-    "tips_title": {"en": "Preventive guidance", "hi": "सावधानी सुझाव", "te": "జాగ్రత్త సూచనలు"},
-    "why_title": {"en": "Why this was flagged", "hi": "यह क्यों संदिग्ध है", "te": "ఇది ఎందుకు అనుమానాస్పదం"},
-    "resources_title": {"en": "Report & support resources", "hi": "रिपोर्ट/सहायता", "te": "రిపోర్ట్/సహాయం"},
-    "share": {"en": "Share", "hi": "शेयर", "te": "షేర్"},
-    "speak": {"en": "Speak", "hi": "बोलें", "te": "వినిపించండి"},
-    "analysis_results": {"en": "Analysis Results", "hi": "विश्लेषण परिणाम", "te": "విశ్లేషణ ఫలితాలు"},
-    "pattern_title": {
-        "en": "Pattern analysis — highlighted keywords",
-        "hi": "पैटर्न विश्लेषण — हाइलाइट किए शब्द",
-        "te": "ప్యాటర్న్ విశ్లేషణ — హైలైట్ పదాలు",
-    },
-    "logic_caption": {
-        "en": "Decision logic is based on common scam patterns detected in the text.",
-        "hi": "यह निर्णय संदेश में पाए गए सामान्य स्कैम पैटर्न पर आधारित है।",
-        "te": "ఈ నిర్ణయం సందేశంలో కనిపించిన సాధారణ స్కామ్ ప్యాటర్న్లపై ఆధారపడింది.",
-    },
-    "logic_none": {
-        "en": "No strong scam patterns were detected in the text.",
-        "hi": "संदेश में कोई मजबूत स्कैम पैटर्न नहीं मिला।",
-        "te": "సందేశంలో బలమైన స్కామ్ ప్యాటర్న్లు కనబడలేదు.",
-    },
-    "audio_caption": {
-        "en": "Audio uses your browser’s built‑in speech engine.",
-        "hi": "ऑडियो आपके ब्राउज़र के स्पीच इंजन से चलता है।",
-        "te": "ఆడియో మీ బ్రౌజర్‌లోని స్పీచ్ ఇంజిన్ ద్వారా వినిపిస్తుంది.",
-    },
-    "tabs_analyze": {"en": "Analyze", "hi": "विश्लेषण", "te": "విశ్లేషణ"},
-    "tabs_about": {"en": "About", "hi": "परिचय", "te": "గురించి"},
-    "about_body": {
-        "en": "### About this prototype\nThis is an **AI-based Fraud Risk Detection & Digital Awareness** tool for rural citizens.\n\n### How to use\n- Paste or dictate the suspicious SMS/WhatsApp message.\n- Tap **Analyze** to see the **scam probability (0–100%)**, risk class, and fraud type.\n- Use **Pattern analysis** + **Why this was flagged** to understand the decision.\n\n### What to do if it’s risky\n- **Do not share OTP / UPI PIN / passwords**\n- **Do not click links** in unknown messages\n- Report immediately: **1930** (National Cyber Helpline, India)\n\n### Notes\n- Some results depend on the available ML models; otherwise the app uses safe heuristics.\n- This is a safety-support tool, not legal/financial advice.\n",
-        "hi": "### इस प्रोटोटाइप के बारे में\nयह ग्रामीण नागरिकों के लिए **AI आधारित फ्रॉड रिस्क डिटेक्शन और डिजिटल अवेयरनेस** टूल है।\n\n### उपयोग कैसे करें\n- संदिग्ध SMS/WhatsApp संदेश पेस्ट करें या बोलकर लिखें।\n- **विश्लेषण** दबाएँ: **स्कैम संभावना (0–100%)**, जोखिम स्तर और प्रकार देखें।\n- **पैटर्न विश्लेषण** और **यह क्यों संदिग्ध है** से कारण समझें।\n\n### अगर जोखिम है तो क्या करें\n- **OTP / UPI PIN / पासवर्ड कभी साझा न करें**\n- अनजान संदेशों के **लिंक पर क्लिक न करें**\n- तुरंत रिपोर्ट करें: **1930** (नेशनल साइबर हेल्पलाइन)\n\n### नोट्स\n- ML मॉडल उपलब्ध होने पर परिणाम बेहतर होते हैं; नहीं तो ऐप सुरक्षित नियमों पर चलता है।\n- यह सलाह/टूल सहायता के लिए है, अंतिम निर्णय नहीं।\n",
-        "te": "### ఈ ప్రోటోటైప్ గురించి\nఇది గ్రామీణ పౌరుల కోసం **AI ఆధారిత ఫ్రాడ్ రిస్క్ డిటెక్షన్ & డిజిటల్ అవగాహన** టూల్.\n\n### ఎలా ఉపయోగించాలి\n- అనుమానాస్పద SMS/WhatsApp సందేశాన్ని పేస్ట్ చేయండి లేదా మైక్ ద్వారా చెప్పండి.\n- **విశ్లేషించండి** నొక్కి **స్కామ్ అవకాశం (0–100%)**, రిస్క్ స్థాయి, ఫ్రాడ్ టైప్ చూడండి.\n- **ప్యాటర్న్ విశ్లేషణ** మరియు **ఇది ఎందుకు అనుమానాస్పదం** ద్వారా కారణం అర్థం చేసుకోండి.\n\n### రిస్క్ ఎక్కువగా ఉంటే ఏమి చేయాలి\n- **OTP / UPI PIN / పాస్‌వర్డ్ ఎప్పుడూ షేర్ చేయవద్దు**\n- తెలియని సందేశాల్లోని **లింక్‌లపై క్లిక్ చేయవద్దు**\n- వెంటనే రిపోర్ట్ చేయండి: **1930** (National Cyber Helpline)\n\n### గమనికలు\n- ML మోడళ్లు ఉంటే ఫలితాలు మెరుగ్గా వస్తాయి; లేకపోతే యాప్ సురక్షిత హ్యూరిస్టిక్స్ ఉపయోగిస్తుంది.\n- ఇది సహాయక భద్రతా టూల్ మాత్రమే; తుది సలహా కాదు.\n",
-    },
-    "share_email": {"en": "Email", "hi": "ईमेल", "te": "ఇమెయిల్"},
-    "share_whatsapp": {"en": "WhatsApp", "hi": "व्हाट्सऐप", "te": "వాట్సాప్"},
-    "share_x": {"en": "X / Twitter", "hi": "X / ट्विटर", "te": "X / ట్విట్టర్"},
-    "share_download": {"en": "Download", "hi": "डाउनलोड", "te": "డౌన్లోడ్"},
-    "copy_label": {"en": "Copy text", "hi": "टेक्स्ट कॉपी करें", "te": "టెక్స్ట్ కాపీ"},
-    "voice_hint": {
-        "en": "Tap the mic to dictate, or type/paste below.",
-        "hi": "माइक दबाकर बोलें या नीचे लिखें/पेस्ट करें।",
-        "te": "మైక్ నొక్కి చెప్పండి లేదా క్రింద టైప్/పేస్ట్ చేయండి.",
-    },
-    "min_chars": {
-        "en": "Please enter at least 10 characters.",
-        "hi": "कम से कम 10 अक्षर लिखें।",
-        "te": "కనీసం 10 అక్షరాలు నమోదు చేయండి.",
-    },
-    "privacy_tip": {
-        "en": "Tip: don’t paste OTP/UPI PIN. Use Redact to hide sensitive data.",
-        "hi": "सलाह: OTP/UPI PIN न डालें। छुपाने के लिए Redact का उपयोग करें।",
-        "te": "సూచన: OTP/UPI PIN పేస్ట్ చేయకండి. మాస్క్ చేయడానికి Redact ఉపయోగించండి.",
-    },
+    "title": {"en": "AI Fraud Shield Pro"},
+    "hero_eyebrow": {"en": "Real-Time Threat Intelligence"},
+    "hero_sub": {"en": "SMS · Message · Fraud Risk Analysis Engine"},
+    "input_label": {"en": "Input Message"},
+    "analyze": {"en": "Analyze"},
+    "clear": {"en": "Clear"},
+    "redact": {"en": "Redact"},
+    "tips_title": {"en": "Preventive guidance"},
+    "why_title": {"en": "Why this was flagged"},
+    "resources_title": {"en": "Report & support resources"},
+    "share": {"en": "Share"},
+    "speak": {"en": "Speak"},
+    "analysis_results": {"en": "Analysis Results"},
+    "pattern_title": {"en": "Pattern analysis — highlighted keywords"},
+    "logic_caption": {"en": "Decision logic is based on common scam patterns detected in the text."},
+    "logic_none": {"en": "No strong scam patterns were detected in the text."},
+    "audio_caption": {"en": "Audio uses your browser’s built‑in speech engine."},
+    "tabs_analyze": {"en": "Analyze"},
+    "tabs_about": {"en": "About"},
+    "about_body": {"en": "### About this prototype\nThis is an **AI-based Fraud Risk Detection & Digital Awareness** tool for rural citizens.\n\n### How to use\n- Paste or dictate the suspicious SMS/WhatsApp message.\n- Tap **Analyze** to see the **scam probability (0–100%)**, risk class, and fraud type.\n- Use **Pattern analysis** + **Why this was flagged** to understand the decision.\n\n### What to do if it’s risky\n- **Do not share OTP / UPI PIN / passwords**\n- **Do not click links** in unknown messages\n- Report immediately: **1930** (National Cyber Helpline, India)\n\n### Notes\n- Some results depend on the available ML models; otherwise the app uses safe heuristics.\n- This is a safety-support tool, not legal/financial advice.\n"},
+    "share_email": {"en": "Email"},
+    "share_whatsapp": {"en": "WhatsApp"},
+    "share_x": {"en": "X / Twitter"},
+    "share_download": {"en": "Download"},
+    "copy_label": {"en": "Copy text"},
+    "voice_hint": {"en": "Tap the mic to dictate, or type/paste below."},
+    "min_chars": {"en": "Please enter at least 10 characters."},
+    "privacy_tip": {"en": "Tip: don’t paste OTP/UPI PIN. Use Redact to hide sensitive data."},
 }
 
 TIPS_I18N: dict[str, dict[str, list[str]]] = {
@@ -121,71 +84,7 @@ TIPS_I18N: dict[str, dict[str, list[str]]] = {
             "Never share Aadhaar/PAN/bank details over messages.",
             "Report to 1930.",
         ],
-    },
-    "hi": {
-        "UPI Fraud": [
-            "UPI PIN या OTP कभी साझा न करें — बैंक कर्मचारी भी नहीं मांगते।",
-            "पेमेंट से पहले रिसीवर ID जांचें।",
-            "बैंक SMS लिंक से KYC/पासवर्ड नहीं मांगते।",
-            "पैसा जोखिम में हो तो तुरंत 1930 पर कॉल करें।",
-        ],
-        "Job Scam": [
-            "असली नौकरी के लिए रजिस्ट्रेशन/फीस नहीं ली जाती।",
-            "कंपनी को ऑफिशियल चैनल से सत्यापित करें।",
-            "बहुत अधिक कमाई का वादा अक्सर स्कैम होता है।",
-            "cybercrime.gov.in पर रिपोर्ट करें।",
-        ],
-        "Lottery Scam": [
-            "जिस लॉटरी में हिस्सा नहीं लिया, उसमें जीत नहीं हो सकती।",
-            "इनाम के लिए 'प्रोसेसिंग फीस' न दें।",
-            "क्लेम करने के लिए अज्ञात लिंक न खोलें।",
-            "1930 पर रिपोर्ट करें।",
-        ],
-        "Phishing": [
-            "KYC/OTP/पासवर्ड मांगने वाले लिंक न खोलें।",
-            "ऑफिशियल वेबसाइट का URL खुद टाइप करें।",
-            "गलत स्पेलिंग/नकली डोमेन से सावधान रहें।",
-            "1930 पर रिपोर्ट करें।",
-        ],
-        "Others": [
-            "शॉर्ट/अनजान लिंक पर क्लिक न करें।",
-            "सेंडर को ऑफिशियल तरीके से वेरिफाई करें।",
-            "आधार/PAN/बैंक डिटेल्स संदेश में न दें।",
-            "1930 पर रिपोर्ट करें।",
-        ],
-    },
-    "te": {
-        "UPI Fraud": [
-            "UPI PIN లేదా OTP ఎప్పుడూ షేర్ చేయవద్దు — బ్యాంక్ వారు కూడా అడగరు.",
-            "చెల్లింపు ముందు రిసీవర్ ID సరిచూసుకోండి.",
-            "SMS లింక్ ద్వారా బ్యాంకులు KYC/పాస్‌వర్డ్ అడగవు.",
-            "డబ్బు ప్రమాదంలో ఉంటే వెంటనే 1930కి కాల్ చేయండి.",
-        ],
-        "Job Scam": [
-            "నిజమైన ఉద్యోగానికి రిజిస్ట్రేషన్/ఫీజు అడగరు.",
-            "కంపెనీని అధికారిక మార్గాల్లో నిర్ధారించండి.",
-            "అత్యధిక ఆదాయం వాగ్దానాలు చాలాసార్లు స్కామ్.",
-            "cybercrime.gov.in లో రిపోర్ట్ చేయండి.",
-        ],
-        "Lottery Scam": [
-            "పాల్గొనని లాటరీలో గెలవడం సాధ్యం కాదు.",
-            "'ప్రాసెసింగ్ ఫీజు' పేరిట డబ్బు చెల్లించవద్దు.",
-            "క్లెయిమ్ కోసం అన్య లింకుల్ని ఓపెన్ చేయవద్దు.",
-            "1930కి రిపోర్ట్ చేయండి.",
-        ],
-        "Phishing": [
-            "KYC/OTP/పాస్‌వర్డ్ అడిగే లింకులను ఓపెన్ చేయవద్దు.",
-            "అధికారిక వెబ్‌సైట్ URL ని మీరే టైప్ చేయండి.",
-            "తప్పు స్పెల్లింగ్/నకిలీ డొమైన్‌లపై జాగ్రత్త.",
-            "1930కి రిపోర్ట్ చేయండి.",
-        ],
-        "Others": [
-            "షార్ట్/తెలియని లింకుల్ని క్లిక్ చేయవద్దు.",
-            "సెండర్‌ను అధికారిక మార్గంలో నిర్ధారించండి.",
-            "ఆధార్/PAN/బ్యాంక్ వివరాలు సందేశంలో ఇవ్వవద్దు.",
-            "1930కి రిపోర్ట్ చేయండి.",
-        ],
-    },
+    }
 }
 
 # Pre-compiled regex patterns
@@ -214,8 +113,7 @@ KEYWORD_REGEX = re.compile("|".join(re.escape(k) for k in _KEYWORDS_SORTED), re.
 # Utilities
 # ----------------------------------------------------------------------
 def tr(key: str) -> str:
-    lang = st.session_state.get("lang", "en")
-    return UI_TEXT.get(key, {}).get(lang, UI_TEXT.get(key, {}).get("en", key))
+    return UI_TEXT.get(key, {}).get("en", key)
 
 def redact_sensitive(text: str) -> str:
     """Replace PII with placeholders."""
@@ -311,12 +209,28 @@ def normalize_fraud_type(ftype: str) -> str:
 
 def get_tips(ftype: str) -> list[str]:
     """Return prevention tips for the given fraud type."""
-    lang = st.session_state.get("lang", "en")
     if ftype not in FRAUD_CATEGORIES and ftype != "None":
         ftype = "Others"
     if ftype == "None":
         ftype = "Others"
-    return TIPS_I18N.get(lang, TIPS_I18N["en"]).get(ftype, TIPS_I18N["en"]["Others"])
+    return TIPS_I18N["en"].get(ftype, TIPS_I18N["en"]["Others"])
+
+# ----------------------------------------------------------------------
+# Translation function
+# ----------------------------------------------------------------------
+def translate_to_english(text: str) -> tuple[str, bool]:
+    """
+    Translate text to English using Google Translate.
+    Returns (translated_text, success_flag).
+    """
+    try:
+        from googletrans import Translator
+        translator = Translator()
+        result = translator.translate(text, dest='en')
+        return result.text, True
+    except Exception as e:
+        st.warning(f"Translation failed: {e}. Using original text.")
+        return text, False
 
 # ----------------------------------------------------------------------
 # Model Loading
@@ -443,22 +357,22 @@ header{background:transparent!important;}
 
 def render_sidebar(bundle: Optional[ModelBundle]) -> None:
     with st.sidebar:
-        langs = list(LANGUAGES.keys())
-        idx = langs.index(st.session_state.get("lang_name", "English"))
-        st.selectbox("Language / भाषा / భాష", langs, index=idx, key="lang_name")
-        st.session_state.lang = LANGUAGES[st.session_state.lang_name]
-
-        st.markdown("---")
-
         st.markdown("**Test Messages**")
         sample_options = ["", "UPI Fraud", "Job Scam", "Lottery Scam", "Phishing", "Courier Scam", "Safe Message"]
         sample_key = "sample_dropdown"
+
+        # Reset dropdown if flag is set
+        if st.session_state.get("reset_sample_dropdown", False):
+            st.session_state[sample_key] = ""
+            st.session_state.reset_sample_dropdown = False
+
         sample_option = st.selectbox(
             "Choose a sample",
             sample_options,
             format_func=lambda x: "Select a sample..." if x == "" else x,
             key=sample_key,
         )
+
         if sample_option and sample_option != st.session_state.get("last_sample"):
             st.session_state.last_sample = sample_option
             sample_map = {
@@ -471,7 +385,7 @@ def render_sidebar(bundle: Optional[ModelBundle]) -> None:
             }
             st.session_state.input_text = sample_map.get(sample_option, "")
             st.session_state.analysis = None
-            st.session_state[sample_key] = ""
+            st.session_state.reset_sample_dropdown = True
             st.rerun()
 
         st.markdown("---")
@@ -550,6 +464,9 @@ def render_input() -> bool:
     char_count = len(st.session_state.input_text or "")
     st.caption(f"{char_count}/1000 characters")
 
+    # Translation toggle
+    st.checkbox("🌐 Translate to English before analysis (using Google Translate)", key="translate_input", value=False)
+
     # Action buttons (set flags)
     col1, col2, col3, col4 = st.columns([2, 1, 1, 5])
     with col1:
@@ -614,6 +531,11 @@ def render_results(analysis: dict) -> None:
         {body}
     </div>
     """, unsafe_allow_html=True)
+
+    # Show original and translated if applicable
+    if "original_text" in r and r["original_text"] != r["raw"]:
+        with st.expander("Original message (before translation)"):
+            st.write(r["original_text"])
 
     if st.session_state.get("auto_speak", True):
         hash_key = hashlib.md5(f"{risk}_{ftype}_{prob:.0f}".encode()).hexdigest()
@@ -713,13 +635,13 @@ def init_session_state() -> None:
         "input_text": "",
         "analysis": None,
         "spoken_hash": None,
-        "lang": "en",
-        "lang_name": "English",
         "voice_enabled": True,
         "auto_speak": True,
         "last_sample": None,
         "redact_requested": False,
         "clear_requested": False,
+        "translate_input": False,
+        "reset_sample_dropdown": False,
     }
     for k, v in defaults.items():
         if k not in st.session_state:
@@ -742,16 +664,24 @@ def main() -> None:
             if len(raw) < 10:
                 st.warning(tr("min_chars"))
             else:
+                original = raw
+                translated = raw
+                if st.session_state.get("translate_input", False):
+                    with st.spinner("Translating to English..."):
+                        translated, success = translate_to_english(raw)
+                        if success:
+                            st.info(f"Translated text: {translated}")
                 with st.spinner("Analyzing..."):
-                    prob, risk, ftype = predict(bundle, raw)
+                    prob, risk, ftype = predict(bundle, translated)
                 st.session_state.analysis = {
-                    "raw": raw,
+                    "raw": translated,
+                    "original_text": original if original != translated else None,
                     "prob": prob,
                     "risk": risk,
                     "ftype": ftype if ftype in FRAUD_CATEGORIES or ftype == "None" else "Others",
-                    "highlighted": highlight_keywords(raw),
+                    "highlighted": highlight_keywords(translated),
                     "tips": get_tips(ftype if risk != "Safe" else "Others"),
-                    "signals": detect_signals(raw),
+                    "signals": detect_signals(translated),
                     "mode": "ml" if bundle is not None else "heuristic",
                 }
         if st.session_state.analysis:
